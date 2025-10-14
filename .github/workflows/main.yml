@@ -1,0 +1,19 @@
+name: Trend Radar Cron
+on:
+  workflow_dispatch:   # 允许手动点运行
+  schedule:
+    - cron: '0 * * * *'   # 每小时一次，可改
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run TrendRadar
+        run: python3 main.py
+      - name: Send Feishu
+        if: env.FEISHU_WEBHOOK != ''
+        run: |
+          curl -X POST -H 'Content-Type: application/json' \
+          -d '{"msg_type":"post","content":{"post":{"zh_cn":{"title":"TrendRadar 热点速报","content":[[{"tag":"text","text":"'"$(cat trend.txt | sed 's/"/\\"/g')"'"}]]}}}}' \
+          ${{ secrets.FEISHU_WEBHOOK }}
